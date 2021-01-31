@@ -24,21 +24,21 @@ def create_app(test_config=None):
   app = Flask(__name__)
   setup_db(app)
   CORS(app, resources={r"/api/*": {"origins": "*" }})
-  
+
   @app.after_request
   def after_request(response):
       response.headers.add('Access-Control-Allow-Headers', 'Content-Type', 'Authorization')
       response.headers.add('Access-Control-Allow-Methods', 'GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS')
       return response
-        
-@app.route('/categories')
-def get_categories():
+
+  @app.route('/categories')
+  def get_categories():
       categories = [category.format() for category in Category.query.all()]
       result ={
             'success': True,
             'categories': categories
       }
-      return jsonify(result)
+      return jsonify(result)    
 
 
 @app.route('/questions')
@@ -142,7 +142,12 @@ def unprocesable(error):
             'message': 'unprocesable'
       }), 422 
 
-      return app
+     
+
+  
+
+
+     
 
    
 
