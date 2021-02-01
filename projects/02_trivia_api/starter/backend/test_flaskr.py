@@ -40,7 +40,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['questions']))
 
     def test_404_sent_requesting_beyond_valid_questions(self):
-        res = self.client().get('/questions')   
+        res = self.client().get('/')   
 
     """
     TODO

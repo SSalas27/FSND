@@ -9,147 +9,124 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+
 def paginate_questions(request, selection):
-      page = request.args.get('page', 1, type =int)
-      start = (page - 1) * QUESTIONS_PER_PAGE
-      end = start + QUESTIONS_PER_PAGE
+    page = request.args.get('page', 1, type=int)
+    start = (page - 1) * QUESTIONS_PER_PAGE
+    end = start + QUESTIONS_PER_PAGE
 
-      questions = [questions.format() for questions in selection]
-      current_questions = questions[start:end]
+    questions = [questions.format() for questions in selection]
+    current_questions = questions[start:end]
 
-      return current_questions
+    return current_questions
 
 
 def create_app(test_config=None):
-  app = Flask(__name__)
-  setup_db(app)
-  CORS(app, resources={r"/api/*": {"origins": "*" }})
+    app = Flask(__name__)
+    setup_db(app)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    return app
 
-  @app.after_request
-  def after_request(response):
-      response.headers.add('Access-Control-Allow-Headers', 'Content-Type', 'Authorization')
-      response.headers.add('Access-Control-Allow-Methods', 'GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS')
-      return response
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Headers',
+                             'Content-Type', 'Authorization')
+        response.headers.add('Access-Control-Allow-Methods','GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS')
+        return response
 
-  @app.route('/categories')
-  def get_categories():
-      categories = [category.format() for category in Category.query.all()]
-      result ={
+
+    @app.route('/categories')
+    def get_categories():
+        categories = [category.format() for category in Category.query.all()]
+        result = {
             'success': True,
             'categories': categories
-      }
-      return jsonify(result)    
+        }
+        return jsonify(result)
 
 
-@app.route('/questions')
-def get_questions():
-      selection = Question.query.order_by(Question.id).all()
-      current_questions = paginate_questions(request, selection)
+    @app.route('/questions')
+    def get_questions():
+        selection = Question.query.order_by(Question.id).all()
+        current_questions = paginate_questions(request, selection)
 
-      if len(current_questions) == 0:
-            abort(404)   
+        if len(current_questions) == 0:
+            abort(404)
 
-      return jsonify({
-            'success': True, 
+
+        return jsonify({
+            'success': True,
             'questions': current_questions,
             'total_questions': len(Question.query.all())
-      })         
-   
-@app.route('/questions/<init:question_id>', methods=['PATCH'])
-def update_question(question_id):
+       })
 
-      body = request.get_json()
+    @app.route('/questions/<int:question_id', methods=['DELETE'])
+    def delete_question(question_id):
+        try:
+            question = Question.query.filter(
+                Question.id == question_id).one_or_none()
 
-      try:
-            question = Question.query.filter(Question.id == question_id).one_or_none()
             if question is None:
-                  abort(404)
-
-            if 'category' in question:
-                  question.category = int(body.get('category'))
-
-            question.update()
-
-            return jsonify({
-                  'success': True, 
-                  'id': question.id
-            })            
-        
-      except:
-            abort(404)
-         
-@app.route('/questions/<int:question_id', methods=['DELETE'])
-def delete_question(question_id):
-      try:
-            question = Question.query.filter(Question.id == question_id).one_or_none()
-            
-            if question is None:
-                  abort (404)
+                abort(404)
 
             question.delete()
             selection = Question.query.order_by(Question.id).all()
-            current_quetions = paginate_questions(request, selection) 
+            current_quetions = paginate_questions(request, selection)
 
             return jsonify({
-                  'success': True, 
-                  'deleted': question_id, 
-                  'books': current_quetions,
-                  'total_questions': len(Question.query.all())
+                'success': True,
+                'deleted': question_id,
+                'books': current_quetions,
+                'total_questions': len(Question.query.all())
             })
 
-      except:
-            abort(422)    
+        except:
+            abort(422)
 
 
-@app.route('/quetsions', methods=['POST'])
-def create_question():
-      body = request.get_json()
+    @app.route('/quetsions', methods=['POST'])
+    def create_question():
+        body = request.get_json()
 
-      new_question = body.get('question', None)
-      new_answer = body.get('answer', None)
-      new_category = body.get('category', None)
-      new_difficulty = body.get('difficulty', None)
+        new_question = body.get('question', None)
+        new_answer = body.get('answer', None)
+        new_category = body.get('category', None)
+        new_difficulty = body.get('difficulty', None)
 
-      try:
-            question = Question(question=new_question, answer=new_answer, category=new_category, difficulty=new_difficulty)
+        try:
+            question = Question(question=new_question, answer=new_answer,
+                                category=new_category, difficulty=new_difficulty)
             question.insert()
 
             selection = Question.query.order_by(Question.id).all()
             current_questions = paginate_questions(request, selection)
 
             return jsonify({
-                  'success': True,
-                  'created': question.id,
-                  'questions': current_questions,
-                  'total_questions': len(Question.query.all())
+                'success': True,
+                'created': question.id,
+                'questions': current_questions,
+                'total_questions': len(Question.query.all())
             })
-      except:
+        except:
             abort(422)
 
-@app.errorhandler(404)
-def not_found(error):
-      return jsonify({
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
             'success': False,
             'error': 404,
             'message': 'resource not found'
-      }) , 404    
+        }), 404
 
-@app.errorhandler(422)
-def unprocesable(error):
-      return jsonify({
+
+    @app.errorhandler(422)
+    def unprocesable(error):
+        return jsonify({
             'success': False,
             'error': 422,
             'message': 'unprocesable'
-      }), 422 
-
-     
-
-  
-
-
-     
-
-   
+        }), 422
 
 
 '''
@@ -229,7 +206,3 @@ def unprocesable(error):
   Create error handlers for all expected errors 
   including 404 and 422. 
 '''
-  
-
-
-    
