@@ -25,8 +25,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
     setup_db(app)
     CORS(app, resources={r"/api/*": {"origins": "*"}})
-    return app
-
+    
     @app.after_request
     def after_request(response):
         response.headers.add('Access-Control-Allow-Headers',
@@ -45,7 +44,7 @@ def create_app(test_config=None):
         return jsonify(result)
 
 
-    @app.route('/questions')
+    @app.route('/questions', methods =['POST'])
     def get_questions():
         selection = Question.query.order_by(Question.id).all()
         current_questions = paginate_questions(request, selection)
@@ -60,7 +59,7 @@ def create_app(test_config=None):
             'total_questions': len(Question.query.all())
        })
 
-    @app.route('/questions/<int:question_id', methods=['DELETE'])
+    @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         try:
             question = Question.query.filter(
@@ -127,7 +126,7 @@ def create_app(test_config=None):
             'error': 422,
             'message': 'unprocesable'
         }), 422
-
+    return app
 
 '''
   @TODO: 
